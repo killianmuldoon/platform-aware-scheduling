@@ -13,10 +13,6 @@ jobs:
       - uses: brpaz/hadolint-action@v1.2.1
         with:
           dockerfile: deploy/images/Dockerfile_controller
-      - uses: brpaz/hadolint-action@v1.2.1
-        with:
-          dockerfile: ./deploy/images/Dockerfile_extender
-
   golangci:
     strategy:
       matrix:
