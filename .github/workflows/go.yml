@@ -17,7 +17,7 @@ jobs:
       uses: ludeeus/action-shellcheck@master
       continue-on-error: true
     - name: hadolint
-      run: hadolint ./**/*Dockerfile
+      run: hadolint ./**/Dockerfile*
 
   golangci:
     strategy:
