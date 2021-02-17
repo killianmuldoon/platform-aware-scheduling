@@ -16,8 +16,13 @@ jobs:
     - name: Run ShellCheck
       uses: ludeeus/action-shellcheck@master
       continue-on-error: true
-    - name: hadolint
-      run: hadolint ./**/Dockerfile*
+    - uses: brpaz/hadolint-action@v1.2.1
+      name: Run Hadolint
+      with:
+       dockerfile: deploy/images/Dockerfile_controller
+    - uses: brpaz/hadolint-action@v1.2.1
+      with:
+        dockerfile: deploy/images/Dockerfile_extender
 
   golangci:
     strategy:
