@@ -7,6 +7,13 @@ on:
     branches: [ master ]
 
 jobs:
+  hado:
+    runs-on: ubuntu-latest
+    container: hadolint/hadolint
+    steps:
+      - uses: actions/checkout@v2
+      - name: hadolint
+        run: hadolint ./**/*Dockerfile
   shellcheck:
     name: Shellcheck
     runs-on: ubuntu-latest
@@ -17,7 +24,13 @@ jobs:
       continue-on-error: true
     - run: ls -la  ..
     - run: pwd
+    
     - uses: brpaz/hadolint-action@v1.2.1
+      with:
+       dockerfile: deploy/images/Dockerfile_controller
+    - uses: brpaz/hadolint-action@v1.2.1
+      with:
+        dockerfile: deploy/images/Dockerfile_controller
       continue-on-error: true
 
   golangci:
