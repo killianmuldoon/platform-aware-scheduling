@@ -10,7 +10,6 @@ jobs:
   shellcheck:
     name: Shellcheck
     runs-on: ubuntu-latest
-    container: hadolint/hadolint
     steps:
     - uses: actions/checkout@v2
     - name: Run ShellCheck
