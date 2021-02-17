@@ -7,6 +7,13 @@ on:
     branches: [ master ]
 
 jobs:
+  snyk:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/golang@master
+
   shellcheck:
     name: Shellcheck
     runs-on: ubuntu-latest
