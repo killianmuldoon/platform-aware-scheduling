@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: hadolint
-        run: hadolint ./**/*Dockerfile
+        run: hadolint ./**/*Dockerfile*
 
   shellcheck:
     name: Shellcheck
