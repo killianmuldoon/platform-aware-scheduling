@@ -10,7 +10,7 @@ jobs:
   hadolint:
     runs-on: ubuntu-latest
     steps:
-      - run: ls -la  
+      - run: ls -la  ..
       - run: pwd
       - uses: brpaz/hadolint-action@v1.2.1
 
