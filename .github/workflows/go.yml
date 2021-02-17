@@ -7,6 +7,14 @@ on:
     branches: [ master ]
 
 jobs:
+  hadolint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: brpaz/hadolint-action@v1.2.1
+        with:
+          dockerfile: deploy/images/Dockerfile_controller
+          dockerfile: deploy/images/Dockerfile_extender
+
   golangci:
     strategy:
       matrix:
