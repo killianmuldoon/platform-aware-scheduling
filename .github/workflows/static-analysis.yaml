@@ -7,16 +7,6 @@ on:
     branches: [ master ]
 
 jobs:
-  docker:
-    runs-on: ubuntu-latest
-
-    container: hadolint/hadolint
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: hadolint
-        run: hadolint './**/*Dockerfile*'
-
   shellcheck:
     name: Shellcheck
     runs-on: ubuntu-latest
@@ -29,8 +19,8 @@ jobs:
     name: Hadolint
     steps:
     - uses: actions/checkout@v2
+#     Each dockerfile needs to be pointed to individually with this setup
     - uses: brpaz/hadolint-action@v1.2.1
-      name: Run Hadolint
       with:
        dockerfile: deploy/images/Dockerfile_controller
     - uses: brpaz/hadolint-action@v1.2.1
