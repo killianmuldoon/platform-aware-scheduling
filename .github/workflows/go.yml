@@ -21,6 +21,7 @@ jobs:
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
           version: v1.29
+          args: --enable=golint
 
   build:
     runs-on: ubuntu-latest
@@ -34,6 +35,9 @@ jobs:
 
     - name: Build
       run: go build -v ./...
+
+    - name: Vet
+      run: go vet -v ./...
 
     - name: Test
       run: go test -v ./...
