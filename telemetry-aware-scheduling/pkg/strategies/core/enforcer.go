@@ -14,14 +14,14 @@ import (
 //MetricEnforcer instruments behavior to register strategies and trigger their enforcement actions.
 type MetricEnforcer struct {
 	sync.RWMutex
-	RegisteredStrategies map[string]map[Interface]interface{}
+	RegisteredStrategies map[string]map[Enforceable]interface{}
 	KubeClient           kubernetes.Interface
 }
 
 //NewEnforcer returns an enforcer with the passed arguments and an empty strategy store.
 func NewEnforcer(kubeClient kubernetes.Interface) *MetricEnforcer {
 	return &MetricEnforcer{
-		RegisteredStrategies: make(map[string]map[Interface]interface{}),
+		RegisteredStrategies: make(map[string]map[Enforceable]interface{}),
 		KubeClient:           kubeClient,
 	}
 }
@@ -30,7 +30,7 @@ func NewEnforcer(kubeClient kubernetes.Interface) *MetricEnforcer {
 func (e *MetricEnforcer) RegisterStrategyType(str Interface) {
 	e.Lock()
 	defer e.Unlock()
-	e.RegisteredStrategies[str.StrategyType()] = map[Interface]interface{}{}
+	e.RegisteredStrategies[str.StrategyType()] = map[Enforceable]interface{}{}
 }
 
 //IsRegistered checks to see if a passed strategy is already being enforced
@@ -62,23 +62,23 @@ func (e *MetricEnforcer) RegisteredStrategyTypes() []string {
 }
 
 //RemoveStrategy will take a strategy out of the enforcer if it's currently registered
-func (e *MetricEnforcer) RemoveStrategy(str Interface, strategyType string) {
+func (e *MetricEnforcer) RemoveStrategy(str Enforceable) {
 	e.Lock()
 	defer e.Unlock()
-	for s := range e.RegisteredStrategies[strategyType] {
+	for s := range e.RegisteredStrategies[str.StrategyType()] {
 		if s.Equals(str) {
-			delete(e.RegisteredStrategies[strategyType], s)
-			msg := fmt.Sprintf("Removed %v: %v from strategy register", s.GetPolicyName(), strategyType)
+			delete(e.RegisteredStrategies[str.StrategyType()], s)
+			msg := fmt.Sprintf("Removed %v: %v from strategy register", s.GetPolicyName(), str.StrategyType())
 			klog.V(2).InfoS(msg, "component", "controller")
 		}
 	}
 }
 
 //AddStrategy includes the specific strategy under its type in the strategy registry.
-func (e *MetricEnforcer) AddStrategy(str Interface, strategyType string) {
+func (e *MetricEnforcer) AddStrategy(str Enforceable) {
 	e.Lock()
 	defer e.Unlock()
-	for s := range e.RegisteredStrategies[strategyType] {
+	for s := range e.RegisteredStrategies[str.StrategyType()] {
 		if s.Equals(str) {
 			msg := fmt.Sprintf("Duplicate strategy found. Not adding %v: %v to registry", s.GetPolicyName(), s.StrategyType())
 			klog.V(2).InfoS(msg, "component", "controller")
@@ -87,9 +87,10 @@ func (e *MetricEnforcer) AddStrategy(str Interface, strategyType string) {
 	}
 	msg := fmt.Sprintf("Adding strategies: %v %v", str.StrategyType(), str.GetPolicyName())
 	klog.V(2).InfoS(msg, "component", "controller")
-	if _, ok := e.RegisteredStrategies[strategyType]; ok {
-		e.RegisteredStrategies[strategyType][str] = nil
+		if _, ok := e.RegisteredStrategies[str.StrategyType()]; ok {
+		e.RegisteredStrategies[str.StrategyType()][str] = nil
 		return
+
 	}
 }
 
@@ -117,5 +118,4 @@ func (e *MetricEnforcer) enforceStrategy(strategyType string, cache cache.Reader
 			}
 		}
 	}
-
 }

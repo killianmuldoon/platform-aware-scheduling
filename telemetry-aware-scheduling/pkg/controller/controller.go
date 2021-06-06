@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	strategy "github.com/intel/telemetry-aware-scheduling/telemetry-aware-scheduling/pkg/strategies/core"
 	"github.com/intel/telemetry-aware-scheduling/telemetry-aware-scheduling/pkg/strategies/deschedule"
@@ -65,7 +66,7 @@ func (controller *TelemetryPolicyController) onAdd(obj interface{}) {
 		klog.V(2).InfoS("Policy not added to cache: "+err.Error(), "component", "controller")
 		return
 	}
-	for _, name := range controller.Enforcer.RegisteredStrategyTypes() {
+	for name, _ := range polCopy.Spec.Strategies {
 		klog.V(4).InfoS("registering "+name+" from "+pol.Name, "component", "controller")
 		strt, err := castStrategy(name, polCopy.Spec.Strategies[name])
 		if err != nil {
@@ -73,13 +74,15 @@ func (controller *TelemetryPolicyController) onAdd(obj interface{}) {
 			return
 		}
 		strt.SetPolicyName(polCopy.ObjectMeta.Name)
-		controller.Enforcer.AddStrategy(strt, name)
 		ruleset := polCopy.Spec.Strategies
 		for _, rule := range ruleset[name].Rules {
 			err := controller.WriteMetric(rule.Metricname, nil)
 			if err == nil {
 				klog.V(2).InfoS("Added "+rule.Metricname, "component", "controller")
 			}
+		}
+		if s, err := isEnforceable(strt); err == nil {
+			controller.Enforcer.AddStrategy(s)
 		}
 	}
 	klog.V(2).InfoS("Added policy, "+polCopy.Name, "component", "controller")
@@ -102,6 +105,14 @@ func castStrategy(strategyType string, policy telemetrypolicy.TASPolicyStrategy)
 	}
 }
 
+func isEnforceable (str strategy.Interface) (strategy.Enforceable, error ){
+	if s, ok := str.(strategy.Enforceable); ok {
+		log.Println(str.GetPolicyName(), "is proven to be NORMAL ")
+		return s, nil
+	}
+	return nil, errors.New("Strategy is not enforceable")
+}
+
 //Update deletes the old policy and unregisters strategies and metrics
 func (controller *TelemetryPolicyController) onUpdate(old, new interface{}) {
 	oldPol := old.(*telemetrypolicy.TASPolicy)
@@ -114,13 +125,15 @@ func (controller *TelemetryPolicyController) onUpdate(old, new interface{}) {
 		return
 	}
 	klog.V(2).InfoS("Policy: "+polCopy.Name+" updated", "component", "controller")
-	for _, name := range controller.Enforcer.RegisteredStrategyTypes() {
+	for name, _ := range polCopy.Spec.Strategies {
 		oldStrat, err := castStrategy(name, oldPol.Spec.Strategies[name])
 		if err != nil {
 			klog.V(2).InfoS(err.Error(), "component", "controller")
 			return
 		}
-		controller.Enforcer.RemoveStrategy(oldStrat, oldStrat.StrategyType())
+		if old, err := isEnforceable(oldStrat); err == nil {
+			controller.Enforcer.RemoveStrategy(old)
+		}
 		for _, rule := range oldPol.Spec.Strategies[oldStrat.StrategyType()].Rules {
 			err := controller.DeleteMetric(rule.Metricname)
 			if err != nil {
@@ -133,13 +146,16 @@ func (controller *TelemetryPolicyController) onUpdate(old, new interface{}) {
 			return
 		}
 		strt.SetPolicyName(polCopy.ObjectMeta.Name)
-		controller.Enforcer.AddStrategy(strt, name)
 		for _, rule := range polCopy.Spec.Strategies[name].Rules {
 			err := controller.WriteMetric(rule.Metricname, nil)
 			if err != nil {
 				klog.V(2).InfoS(err.Error(), "component", "controller")
 			}
 		}
+		if s, err := isEnforceable(strt); err == nil {
+			controller.Enforcer.AddStrategy(s)
+		}
+
 	}
 }
 
@@ -147,21 +163,24 @@ func (controller *TelemetryPolicyController) onUpdate(old, new interface{}) {
 func (controller *TelemetryPolicyController) onDelete(obj interface{}) {
 	pol := obj.(*telemetrypolicy.TASPolicy)
 	polCopy := pol.DeepCopy()
-	for _, name := range controller.Enforcer.RegisteredStrategyTypes() {
+	for name, _ := range polCopy.Spec.Strategies {
 		strt, err := castStrategy(name, polCopy.Spec.Strategies[name])
 		if err != nil {
 			klog.V(2).InfoS(err.Error(), "component", "controller")
 			return
 		}
 		strt.SetPolicyName(pol.Name)
-		controller.Enforcer.RemoveStrategy(strt, strt.StrategyType())
 		for _, rule := range polCopy.Spec.Strategies[strt.StrategyType()].Rules {
 			err := controller.DeleteMetric(rule.Metricname)
 			if err != nil {
 				klog.V(2).InfoS(err.Error(), "component", "controller")
 			}
 		}
+		if s, err := isEnforceable(strt); err == nil {
+			controller.Enforcer.RemoveStrategy(s)
+		}
 	}
+
 	err := controller.DeletePolicy(polCopy.Namespace, polCopy.Name)
 	if err != nil {
 		klog.V(4).InfoS(err.Error(), "component", "controller")

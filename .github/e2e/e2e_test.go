@@ -161,6 +161,7 @@ func TestTASFilter(t *testing.T) {
 
 }
 
+
 // TestTASPrioritize will test the behaviour of a pod with a listed prioritize/scheduleonmetric policy in TAS
 func TestTASPrioritize(t *testing.T) {
 	tests := map[string]struct {
@@ -189,6 +190,50 @@ func TestTASPrioritize(t *testing.T) {
 			p, _ := cl.CoreV1().Pods("default").Get(context.TODO(), tc.pod.Name, metav1.GetOptions{})
 			log.Print(p.Name)
 
+			if !reflect.DeepEqual(tc.want, p.Spec.NodeName) {
+				t.Errorf("expected: %v, got: %v", tc.want, p.Spec.NodeName)
+			}
+		})
+	}
+}
+
+
+// TestRepeatAddAndRemovePolicy tests that TAS is able to keep track of policies after adding and removing
+func TestRepeatAddAndRemovePolicy(t *testing.T) {
+	tests := map[string]struct {
+		policy *api.TASPolicy
+		pod    *v1.Pod
+		repetitions int
+		want   string
+	}{
+		"Create and delete filter policy twice": {policy: filter1Policy, pod: podForPolicy(fmt.Sprintf("pod-%v", time.Now().Unix()), filter1Policy.Name), repetitions: 1, want: "kind-worker2"},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			log.Printf("Running: %v\n", name)
+			//defer the running of a cleanup function to remove the policy and pod after the test case
+			defer cleanup(tc.pod.Name, tc.policy.Name)
+			for i:= 0 ; i <= tc.repetitions ; i++ {
+				_, err := tascl.Create(tc.policy)
+				if err != nil {
+					log.Print(err)
+				}
+				time.Sleep(time.Second * 5)
+				err = tascl.Delete(tc.policy.Name, &metav1.DeleteOptions{})
+				if err != nil {
+					log.Print(err)
+				}
+			}
+			_, err := tascl.Create(tc.policy)
+			time.Sleep(time.Second * 2)
+			_, err = cl.CoreV1().Pods("default").Create(context.TODO(), tc.pod, metav1.CreateOptions{})
+			if err != nil {
+				log.Print(err)
+			}
+
+			time.Sleep(time.Second * 5)
+			p, _ := cl.CoreV1().Pods("default").Get(context.TODO(), tc.pod.Name, metav1.GetOptions{})
+			log.Print(p.Name)
 			if !reflect.DeepEqual(tc.want, p.Spec.NodeName) {
 				t.Errorf("expected: %v, got: %v", tc.want, p.Spec.NodeName)
 			}

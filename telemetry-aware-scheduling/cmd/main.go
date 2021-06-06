@@ -79,6 +79,7 @@ func tasController(kubeConfig string, syncPeriod string, cache *tascache.AutoUpd
 		Writer:    cache,
 		Enforcer:  enfrcr,
 	}
+	//this block registers the strategy types that are valid for TAS
 	enfrcr.RegisterStrategyType(&deschedule.Strategy{})
 	enfrcr.RegisterStrategyType(&scheduleonmetric.Strategy{})
 	enfrcr.RegisterStrategyType(&dontschedule.Strategy{})

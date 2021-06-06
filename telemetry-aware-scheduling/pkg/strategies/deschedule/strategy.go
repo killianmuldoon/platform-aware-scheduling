@@ -86,3 +86,8 @@ func (d *Strategy) GetPolicyName() string {
 func (d *Strategy) SetPolicyName(name string) {
 	d.PolicyName = name
 }
+
+//Empty cleanup method added to meet interface definition
+func (d *Strategy) Cleanup () error {
+	return nil
+}
