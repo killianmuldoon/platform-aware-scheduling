@@ -19,8 +19,9 @@ CNIS_NAME="cni-plugins"
 # Kubernetes CA. Cert for scheduler/TAS will be signed by this CA
 generate_k8_scheduler_config_data() {
   mkdir -p "${TMP_DIR}"
-  mount_dir="$(mktemp -q -p "${TMP_DIR}" -d -t tas-e2e-k8-XXXXXXXX)"
+  mount_dir="$(gmktemp -q -p "${TMP_DIR}" -d -t tas-e2e-k8-XXXXXXXX)"
   cp "${K8_ADDITIONS_PATH}/policy.yaml" "${mount_dir}/"
+  echo $mount_dir
 }
 
 create_cluster() {
@@ -39,8 +40,8 @@ kubeadmConfigPatches:
     extraVolumes:
     - name: kubeconfig
       hostPath: /etc/kubernetes/scheduler.conf
-      mountPath: /etc/kubernetes/scheduler.conf 
-    - name: certs 
+      mountPath: /etc/kubernetes/scheduler.conf
+    - name: certs
       hostPath: /etc/kubernetes/pki/
       mountPath: /etc/kubernetes/pki/
     - name: schedulerconfig
@@ -55,17 +56,14 @@ nodes:
     extraMounts:
     - hostPath: "${mount_dir}/node1"
       containerPath: "/tmp/node-metrics/node1.prom"
-      propagation: HostToContainer
   - role: worker
     extraMounts:
     - hostPath: "${mount_dir}/node2"
       containerPath: "/tmp/node-metrics/node2.prom"
-      propagation: HostToContainer
   - role: worker
     extraMounts:
     - hostPath: "${mount_dir}/node3"
       containerPath: "/tmp/node-metrics/node3.prom"
-      propagation: HostToContainer
 
 EOF
 }
@@ -115,8 +113,6 @@ cp "${K8_ADDITIONS_PATH}/node3" "${mount_dir}"
 
 echo "## start Kind cluster with precreated CA key/cert"
 create_cluster
-
-
 
 kubectl create namespace monitoring;
 helm install node-exporter "${root}/telemetry-aware-scheduling/deploy/charts/prometheus_node_exporter_helm_chart/";
