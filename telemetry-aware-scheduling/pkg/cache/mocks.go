@@ -15,7 +15,7 @@ import (
 //MockEmptySelfUpdatingCache returns auto updating cache
 func MockEmptySelfUpdatingCache() ReaderWriter {
 	n := NewAutoUpdatingCache()
-	go n.PeriodicUpdate(*time.NewTicker(time.Second), metrics.NewDummyMetricsClient(map[string]metrics.NodeMetricsInfo{}), map[string]interface{}{})
+	go n.PeriodicUpdate(*time.NewTicker(time.Second), metrics.NewDummyMetricsClient(map[string]metrics.NodeMetricsInfo{}))
 	return n
 }
 

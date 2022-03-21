@@ -75,8 +75,7 @@ func tasController(kubeConfig string, syncPeriod string, cache *tascache.AutoUpd
 		klog.Exit(err.Error())
 	}
 	metricTicker := time.NewTicker(syncDuration)
-	initialData := map[string]interface{}{}
-	go cache.PeriodicUpdate(*metricTicker, metricsClient, initialData)
+	go cache.PeriodicUpdate(*metricTicker, metricsClient)
 	enforcerTicker := time.NewTicker(syncDuration)
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()

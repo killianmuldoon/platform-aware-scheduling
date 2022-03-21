@@ -34,8 +34,8 @@ func NewAutoUpdatingCache() *AutoUpdatingCache {
 }
 
 //PeriodicUpdate updates all the metrics in the Cache periodically based on a ticker passed to it.
-func (n *AutoUpdatingCache) PeriodicUpdate(period time.Ticker, client metrics.Client, initialData map[string]interface{}) {
-	go n.run(n.cache, initialData)
+func (n *AutoUpdatingCache) PeriodicUpdate(period time.Ticker, client metrics.Client) {
+	go n.run(n.cache)
 	for {
 		n.updateAllMetrics(client)
 		<-period.C

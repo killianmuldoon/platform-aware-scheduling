@@ -37,7 +37,7 @@ func TestNodeMetricsCache_PeriodicUpdate(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			n := NewAutoUpdatingCache()
-			go n.PeriodicUpdate(*time.NewTicker(time.Second), tt.args.client, map[string]interface{}{})
+			go n.PeriodicUpdate(*time.NewTicker(time.Second), tt.args.client)
 			err := n.WriteMetric("dummyMetric1", nil)
 			if err != nil {
 				if tt.wantErr {

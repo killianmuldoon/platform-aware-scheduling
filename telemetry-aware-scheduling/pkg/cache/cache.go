@@ -40,8 +40,8 @@ func (c concurrentCache) newRequest(t requestType) request {
 }
 
 //run runs a constant goroutine waiting for requests and setting up the initial data structure.
-func (c concurrentCache) run(ch chan request, initialData map[string]interface{}) {
-	cache := initialData
+func (c concurrentCache) run(ch chan request) {
+	cache := map[string]interface{}{}
 	for {
 		req := <-ch
 		switch req.Type {
