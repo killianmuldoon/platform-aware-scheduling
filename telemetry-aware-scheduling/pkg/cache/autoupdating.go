@@ -44,8 +44,8 @@ func (n *AutoUpdatingCache) PeriodicUpdate(period time.Ticker, client metrics.Cl
 
 //updateAllMetrics performs an updateAllMetrics to every metric in the cache.
 func (n *AutoUpdatingCache) updateAllMetrics(client metrics.Client) {
-	n.mtx.Lock()
-	defer n.mtx.Unlock()
+	n.mtx.RLock()
+	defer n.mtx.RUnlock()
 	for name := range n.metricMap {
 		if len(name) > 0 {
 			err := n.updateMetric(client, name)
@@ -105,6 +105,8 @@ func (n *AutoUpdatingCache) WritePolicy(namespace string, policyName string, pol
 func (n *AutoUpdatingCache) WriteMetric(metricName string, data metrics.NodeMetricsInfo) error {
 	payload := nilPayloadCheck(data)
 	n.add(fmt.Sprintf(metricPath, metricName), payload)
+	n.mtx.Lock()
+	n.mtx.Unlock()
 	if payload == nil {
 		if total, ok := n.metricMap[metricName]; ok {
 			n.metricMap[metricName] = total + 1

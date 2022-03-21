@@ -47,7 +47,9 @@ func TestNodeMetricsCache_PeriodicUpdate(t *testing.T) {
 				t.Error(err)
 			}
 			atStart, _ := n.ReadMetric(tt.queriedName)
+			n.mtx.Lock()
 			metrics.InstanceOfMockMetricClientMap[tt.queriedName] = tt.updatedMetric
+			n.mtx.Unlock()
 			time.Sleep(tt.delay)
 			atEnd, err := n.ReadMetric(tt.queriedName)
 			if err != nil {
