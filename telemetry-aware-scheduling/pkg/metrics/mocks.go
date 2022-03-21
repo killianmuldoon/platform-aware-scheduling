@@ -39,7 +39,7 @@ func DummyRestClientConfig() *restclient.Config {
 
 //DummyMetricsClient structured with a map of NodeMetricsInfo
 type DummyMetricsClient struct {
-	store *map[string]NodeMetricsInfo
+	store map[string]NodeMetricsInfo
 }
 
 //InstanceOfMockMetricClientMap refers to the metrics from Nodes
@@ -52,14 +52,13 @@ var InstanceOfMockMetricClientMap = map[string]NodeMetricsInfo{
 //NewDummyMetricsClient receives the Node metrics and return the map values of client
 func NewDummyMetricsClient(cache map[string]NodeMetricsInfo) Client {
 	return DummyMetricsClient{
-		&cache,
+		cache,
 	}
 }
 
 //GetNodeMetric returns the NodeMetricsInfo of a metric when it exists.
 func (d DummyMetricsClient) GetNodeMetric(metricName string) (NodeMetricsInfo, error) {
-	s := *d.store
-	if v, ok := s[metricName]; ok {
+	if v, ok := d.store[metricName]; ok {
 		return v, nil
 	}
 	return nil, errors.New("metric not found")

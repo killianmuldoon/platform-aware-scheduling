@@ -39,7 +39,13 @@ func TestNodeMetricsCache_PeriodicUpdate(t *testing.T) {
 			n := NewAutoUpdatingCache()
 			go n.PeriodicUpdate(*time.NewTicker(time.Second), tt.args.client, map[string]interface{}{})
 			err := n.WriteMetric("dummyMetric1", nil)
-			_ = n.WriteMetric("", nil)
+			if err != nil {
+				if tt.wantErr {
+					return
+				}
+				t.Error(err)
+			}
+			err = n.WriteMetric("", nil)
 			if err != nil {
 				if tt.wantErr {
 					return
@@ -47,7 +53,13 @@ func TestNodeMetricsCache_PeriodicUpdate(t *testing.T) {
 				t.Error(err)
 			}
 			atStart, _ := n.ReadMetric(tt.queriedName)
-			metrics.InstanceOfMockMetricClientMap[tt.queriedName] = tt.updatedMetric
+			err = n.WriteMetric(tt.queriedName, tt.updatedMetric)
+			if err != nil {
+				if tt.wantErr {
+					return
+				}
+				t.Error(err)
+			}
 			time.Sleep(tt.delay)
 			atEnd, err := n.ReadMetric(tt.queriedName)
 			if err != nil {

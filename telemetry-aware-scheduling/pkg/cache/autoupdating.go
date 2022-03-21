@@ -44,17 +44,25 @@ func (n *AutoUpdatingCache) PeriodicUpdate(period time.Ticker, client metrics.Cl
 
 //updateAllMetrics performs an updateAllMetrics to every metric in the cache.
 func (n *AutoUpdatingCache) updateAllMetrics(client metrics.Client) {
-	n.mtx.Lock()
-	defer n.mtx.Unlock()
+	n.mtx.RLock()
+	defer n.mtx.RUnlock()
+
+	if len(n.metricMap) == 0 {
+		return
+	}
 	for name := range n.metricMap {
+		n.mtx.RUnlock()
 		if len(name) > 0 {
 			err := n.updateMetric(client, name)
 			if err != nil {
 				klog.V(2).InfoS(err.Error(), "component", "controller")
 			}
 		} else {
+			n.mtx.Lock()
 			delete(n.metricMap, name)
+			n.mtx.Unlock()
 		}
+		n.mtx.RLock()
 	}
 }
 
@@ -105,6 +113,8 @@ func (n *AutoUpdatingCache) WritePolicy(namespace string, policyName string, pol
 func (n *AutoUpdatingCache) WriteMetric(metricName string, data metrics.NodeMetricsInfo) error {
 	payload := nilPayloadCheck(data)
 	n.add(fmt.Sprintf(metricPath, metricName), payload)
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	if payload == nil {
 		if total, ok := n.metricMap[metricName]; ok {
 			n.metricMap[metricName] = total + 1
